@@ -37,6 +37,7 @@ import {
     IsEmpty,
     iscsym,
     expandTabs,
+    sprintf,
 } from './ctype'
 import {
     CAT_EQU,
@@ -61,7 +62,6 @@ import {
     CAT_IMM_DIR_EXT_IX1_IX1_IX,
     aKeyWords,
 } from './opcodes'
-var sprintf = require('sprintf-js').sprintf
 
 enum TOKEN {
     INVALID,
@@ -106,16 +106,13 @@ class CAsmFile {
     protected m_nLogicId: number
     protected m_nLogicNesting: number
     protected m_anLogicStack: number[]
-    // public  ParseToken(int &nPos, int &fFlags) :number ;
-    // public  ParseExpression(int &nPos, int &fFlags) :number ;
-    // public  ParseLine(string strLine, int linenumber); :void
-    // public  AddSourceLine(int nLine); :void
     protected m_nMaxLine: number
-    // public  GetHex(void): string;
     protected m_lineData: CSourceLine[]
-    // int FindKeyword(int nPos, int nLen);
-    // void Emsg(string strEmsg, ...);
-
+    /**
+     * Read a file from a URL and return the contents
+     * @param uri URL to read from
+     * @returns Promise to Contents of file as a single string
+     */
     public async getTextFromFile(uri: string): Promise<string> {
         try {
             const response = await fetch(uri)
@@ -128,23 +125,41 @@ class CAsmFile {
             throw new Error(`Error fetching file: ${error.message}`)
         }
     }
-
+    /**
+     * Read the contents of an include file
+     * @param filepath Filepath of the include file (relative to the base path)
+     * @returns Promise to contents of the file as a single string.
+     */
     public async getincludeFile(filepath: string): Promise<string> {
         let uri = this.m_strIncludeURI
         if (!uri.endsWith('/')) {
             uri += '/'
         }
-        let result = await this.getTextFromFile(uri + filepath)
-        return result
+        return this.getTextFromFile(uri + filepath)
     }
+    /**
+     * Reset the list of errors so we can gather them again.
+     * This is done at the start of a pass.  Note that the first
+     * two passes may generate errors that the final pass resolves (such as forward references)
+     */
     public ResetErrors(): void {
         this.m_strErrors = []
         this.m_nLogicNesting = 0
         this.m_nLogicId = 0
     }
+    /**
+     * Get the list of all errors
+     * @returns The list of error strings
+     */
     public GetErrors(): string[] {
         return this.m_strErrors
     }
+    /**
+     * Parse out a token from the current line and update the position so that
+     * each subsequent call returns the next token on the line.  Note
+     * that blanks are ignored
+     * @returns Next token from the line
+     */
     public GetToken(): TOKEN {
         this.m_nTokenVal = 0
         this.m_strTokenName = ''
@@ -362,14 +377,20 @@ class CAsmFile {
                 return TOKEN.SYMBOL
         }
     }
-
+    /**
+     * Parse an expression - Level 1 ( <expr> )
+     * @param eToken Current token
+     * @returns Next token (if consumed) amd value associated with the current token
+     */
     public ParseLevel1(eToken: TOKEN): [TOKEN, number] {
         let nValue: number = 0
-        // Level 1 -  ( <expr> )
+
         switch (eToken) {
             case TOKEN.LPAREN:
                 ;[eToken, nValue] = this.ParseLevel8(this.GetToken())
-                if (eToken == TOKEN.RPAREN) return [this.GetToken(), nValue]
+                if (eToken == TOKEN.RPAREN) {
+                    return [this.GetToken(), nValue]
+                }
                 //
                 // We have an error on the expression....
                 //
@@ -412,10 +433,14 @@ class CAsmFile {
         }
         return [eToken, nValue]
     }
-
+    /**
+     * Parse an expression - Level 2 - ! <expr>
+     * @param eToken Current token
+     * @returns Next token (if consumed) amd value associated with the current token
+     */
     public ParseLevel2(eToken: TOKEN): [TOKEN, number] {
         let nValue = 0
-        // Level 2 -  ! <expr>
+
         if (eToken == TOKEN.NOT) {
             ;[eToken, nValue] = this.ParseLevel1(this.GetToken())
             nValue = ~nValue
@@ -424,9 +449,14 @@ class CAsmFile {
         return this.ParseLevel1(eToken)
     }
 
+    /**
+     * Parse an expression - Level 3 - <expr>'*'<expr>  <expr>'/'<expr>
+     * @param eToken Current token
+     * @returns Next token (if consumed) amd value associated with the current token
+     */
     public ParseLevel3(eToken: TOKEN): [TOKEN, number] {
         let nValue = 0
-        // Level 3 -  <expr>'*'<expr>  <expr>'/'<expr>
+
         ;[eToken, nValue] = this.ParseLevel2(eToken)
         if (eToken == TOKEN.STAR || eToken == TOKEN.DIVIDE) {
             let nRightValue: number = 0
@@ -441,9 +471,14 @@ class CAsmFile {
         return [eToken, nValue]
     }
 
+    /**
+     * Parse an expression - Level 4 -  <expr>'+'<expr>  <expr>'-'<expr>
+     * @param eToken Current token
+     * @returns Next token (if consumed) amd value associated with the current token
+     */
     public ParseLevel4(eToken: TOKEN): [TOKEN, number] {
         let nValue = 0
-        // Level 4 -  <expr>'+'<expr>  <expr>'-'<expr>
+
         ;[eToken, nValue] = this.ParseLevel3(eToken)
         if (eToken == TOKEN.PLUS || eToken == TOKEN.MINUS) {
             let nRightValue = 0
@@ -458,9 +493,14 @@ class CAsmFile {
         return [eToken, nValue]
     }
 
+    /**
+     * Parse an expression - Level 5 -  <expr>'<<'<expr> <expr>'>>'<expr>
+     * @param eToken Current token
+     * @returns Next token (if consumed) amd value associated with the current token
+     */
     public ParseLevel5(eToken: TOKEN): [TOKEN, number] {
         let nValue = 0
-        // Level 5 -  <expr>'<<'<expr> <expr>'>>'<expr>
+
         ;[eToken, nValue] = this.ParseLevel4(eToken)
         if (eToken == TOKEN.LSHIFT || eToken == TOKEN.RSHIFT) {
             let nRightValue = 0
@@ -475,9 +515,14 @@ class CAsmFile {
         return [eToken, nValue]
     }
 
+    /**
+     * Parse an expression - Level 6 -  <expr>'&'<expr>
+     * @param eToken Current token
+     * @returns Next token (if consumed) amd value associated with the current token
+     */
     public ParseLevel6(eToken: TOKEN): [TOKEN, number] {
         let nValue = 0
-        // Level 6 -  <expr>'&'<expr>
+
         ;[eToken, nValue] = this.ParseLevel5(eToken)
         if (eToken == TOKEN.AND) {
             let nRightValue = 0
@@ -487,9 +532,14 @@ class CAsmFile {
         return [eToken, nValue]
     }
 
+    /**
+     * Parse an expression - Level 7 -  <expr>'^'<expr>
+     * @param eToken Current token
+     * @returns Next token (if consumed) amd value associated with the current token
+     */
     public ParseLevel7(eToken: TOKEN): [TOKEN, number] {
         let nValue = 0
-        // Level 7 -  <expr>'^'<expr>
+
         ;[eToken, nValue] = this.ParseLevel6(eToken)
         if (eToken == TOKEN.XOR) {
             let nRightValue = 0
@@ -499,9 +549,14 @@ class CAsmFile {
         return [eToken, nValue]
     }
 
+    /**
+     * Parse an expression - Level 8 -  <expr>'|'<expr>
+     * @param eToken Current token
+     * @returns Next token (if consumed) amd value associated with the current token
+     */
     public ParseLevel8(eToken: TOKEN): [TOKEN, number] {
         let nValue = 0
-        // Level 8 -  <expr>'|'<expr>
+
         ;[eToken, nValue] = this.ParseLevel7(eToken)
         if (eToken == TOKEN.OR) {
             let nRightValue = 0
@@ -511,21 +566,21 @@ class CAsmFile {
         return [eToken, nValue]
     }
 
-    // Level 1 -  ( <expr> )
-    // Level 2 -  ! <expr>
-    // Level 3 -  <expr>'*'<expr>  <expr>'/'<expr>
-    // Level 4 -  <expr>'+'<expr>  <expr>'-'<expr>
-    // Level 5 -  <expr>'<<'<expr> <expr>'>>'<expr>
-    // Level 6 -  <expr>'&'<expr>
-    // Level 7 -  <expr>'^'<expr>
-    // Level 8 -  <expr>'|'<expr>
-    public FindKeyword(nPos: number, nLen: number): number {
-        if (nLen > 7) return 0
-
-        let strKeyword = this.m_strLine.substring(nPos, nPos + nLen)
-
-        return this.m_symbolTable.LookupKeyword(strKeyword)
-    }
+    /*************************************************************************************
+     *
+     * Expression parsing is done by a recursive descent parser
+     * The lower the level, the higher the priority in associativity.
+     * This allows expressions to make * and / take presendence over + and -
+     *
+     * Level 1 -  ( <expr> )
+     * Level 2 -  ! <expr>
+     * Level 3 -  <expr>'*'<expr>  <expr>'/'<expr>
+     * Level 4 -  <expr>'+'<expr>  <expr>'-'<expr>
+     * Level 5 -  <expr>'<<'<expr> <expr>'>>'<expr>
+     * Level 6 -  <expr>'&'<expr>
+     * Level 7 -  <expr>'^'<expr>
+     * Level 8 -  <expr>'|'<expr>
+     *************************************************************************************/
 
     public Emsg(strEmsg: string, ...args: any[]): void {
         const vaMarker: any[] = args // va_list is not directly supported in TypeScript
@@ -568,7 +623,9 @@ class CAsmFile {
                 //
                 // Throw away a colon if it is after the label
                 //
-                if (eToken == TOKEN.COLON) eToken = this.GetToken()
+                if (eToken == TOKEN.COLON) {
+                    eToken = this.GetToken()
+                }
             }
 
             if (eToken == TOKEN.SYMBOL) {
@@ -611,32 +668,39 @@ class CAsmFile {
                     // TODO: Assert that the value is in range!
                     this.m_lineData[this.m_nCurrentLine].SetRelative(nValue ? nValue : -1)
                     nValue -= this.m_lineData[this.m_nCurrentLine].GetOffset() + 2
-                    if (nValue > 0x7f || nValue < -0x80)
+                    if (nValue > 0x7f || nValue < -0x80) {
                         this.Emsg('Branch Target out of range (Distance=%d)', nValue)
+                    }
                     nData[nBytes++] = nValue & 0xff
                     break
                 case CAT_BSCX >> 8:
                     ;[eToken, nValue] = this.ParseLevel8(eToken)
                     nOpcode += nValue * 2
-                    if (eToken == TOKEN.COMMA) eToken = this.GetToken()
+                    if (eToken == TOKEN.COMMA) {
+                        eToken = this.GetToken()
+                    }
                 // Fall through to the BSC case
                 case CAT_BSC >> 8:
                     ;[eToken, nValue] = this.ParseLevel8(eToken)
                     nData[nBytes++] = nOpcode & 0xff
-                    if (nValue > 0xff || nValue < 0)
+                    if (nValue > 0xff || nValue < 0) {
                         this.Emsg('BSET/BCLR target (%04x) not in zero page', nValue)
+                    }
                     nData[nBytes++] = nValue & 0xff
                     break
                 case CAT_BTBX >> 8:
                     ;[eToken, nValue] = this.ParseLevel8(eToken)
                     nOpcode += nValue * 2
-                    if (eToken == TOKEN.COMMA) eToken = this.GetToken()
+                    if (eToken == TOKEN.COMMA) {
+                        eToken = this.GetToken()
+                    }
                 // Fall through to the BTB case
                 case CAT_BTB >> 8:
                     nData[nBytes++] = nOpcode & 0xff
                     ;[eToken, nValue] = this.ParseLevel8(eToken)
-                    if (nValue > 0xff || nValue < 0)
+                    if (nValue > 0xff || nValue < 0) {
                         this.Emsg('BRSET/BRCLR target (%04x) not in zero page', nValue)
+                    }
                     nData[nBytes++] = nValue & 0xff
                     if (eToken == TOKEN.COMMA) {
                         eToken = this.GetToken()
@@ -645,8 +709,9 @@ class CAsmFile {
                     this.m_lineData[this.m_nCurrentLine].SetRelative(nValue ? nValue : -1)
                     nValue -= this.m_lineData[this.m_nCurrentLine].GetOffset() + 3
                     nData[nBytes++] = nValue & 0xff
-                    if (nValue > 0x7f || nValue < -0x80)
+                    if (nValue > 0x7f || nValue < -0x80) {
                         this.Emsg('Branch Target out of range (Distance=%d)', nValue)
+                    }
                     break
                 case CAT_IMM_DIR_EXT_IX1_IX1_IX >> 8:
                     if (eToken == TOKEN.IMMED) {
@@ -712,16 +777,17 @@ class CAsmFile {
                             ) {
                                 nValue -= this.m_lineData[this.m_nCurrentLine].GetOffset() + 2
                                 if (nValue <= 0x7f && nValue >= -0x80) {
-                                    if ((nOpcode & 0xff) == 0xad)
+                                    if ((nOpcode & 0xff) == 0xad) {
                                         this.Emsg(
                                             'JSR could be replaced with a BSR (distance=%d)',
                                             nValue
                                         )
-                                    else
+                                    } else {
                                         this.Emsg(
                                             'JMP could be replaced with a BRA (distance=%d)',
                                             nValue
                                         )
+                                    }
                                 }
                             }
                         }
@@ -751,17 +817,17 @@ class CAsmFile {
                         } else {
                             // IX1 Mode
                             nData[nBytes++] = (nOpcode & 0xff) + 0x30
-                            if (nValue > 0xff || nValue < 0)
-                                // this.Emsg('Operand (%04x) out of range $00-$FF', nValue)
-                                this.Emsg('Operand (%04x) out of range 00-FF', nValue)
+                            if (nValue > 0xff || nValue < 0) {
+                                this.Emsg('Operand (%04x) out of range $00-$FF', nValue)
+                            }
                             nData[nBytes++] = nValue & 0xff
                         }
                     } else {
                         // DIR Mode
                         nData[nBytes++] = nOpcode & 0xff
-                        if (nValue > 0xff || nValue < 0)
-                            // this.Emsg('Operand (%04x) out of range $00-$FF', nValue)
-                            this.Emsg('Operand (%04x) out of range 00-FF', nValue)
+                        if (nValue > 0xff || nValue < 0) {
+                            this.Emsg('Operand (%04x) out of range $00-$FF', nValue)
+                        }
                         nData[nBytes++] = nValue & 0xff
                     }
                     break
@@ -771,9 +837,9 @@ class CAsmFile {
                 case CAT_DB >> 8:
                     for (;;) {
                         ;[eToken, nValue] = this.ParseLevel8(eToken)
-                        if (nValue > 0xff || nValue < 0)
-                            // this.Emsg('Operand (%04x) out of range $00-$FF', nValue)
-                            this.Emsg('Operand (%04x) out of range 00-FF', nValue)
+                        if (nValue > 0xff || nValue < 0) {
+                            this.Emsg('Operand (%04x) out of range $00-$FF', nValue)
+                        }
                         nData[nBytes++] = nValue & 0xff
                         if (eToken != TOKEN.COMMA) break
                         eToken = this.GetToken()
@@ -808,7 +874,7 @@ class CAsmFile {
                         }
                     }
                     break
-
+                // TODO: Implement IF/THEN/ELSE
                 // case CAT_IF >> 8:
                 //     {
                 //         //
@@ -994,15 +1060,17 @@ class CAsmFile {
                 for (nLineCur = this.m_nCurrentLine + 1; nLineCur < this.m_nMaxLine; nLineCur++) {
                     this.m_lineData[nLineCur].AdjustOffset(nBytes)
                     let nRelativeOffset = this.m_lineData[nLineCur].GetRelativeOffset()
-                    if (nRelativeOffset >= 0 && nRelativeOffset < nCurrentOffset)
+                    if (nRelativeOffset >= 0 && nRelativeOffset < nCurrentOffset) {
                         this.m_lineData[nLineCur].MarkDirty(true)
+                    }
                 }
                 //
                 // Go through and figure out which relative offsets may have been affected.
                 //
                 for (nLineCur = this.m_nCurrentLine; nLineCur > 0; nLineCur--) {
-                    if (this.m_lineData[nLineCur].GetOffset() > nCurrentOffset)
+                    if (this.m_lineData[nLineCur].GetOffset() > nCurrentOffset) {
                         this.m_lineData[nLineCur].MarkDirty(true)
+                    }
                 }
             }
             resolve()

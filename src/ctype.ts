@@ -85,3 +85,54 @@ export function expandTabs(line: string, tabSize: number = 8): string {
         return ' '.repeat(spacesToAdd)
     })
 }
+
+export function sprintf(fmt: string, ...argv: any[]): string {
+    const re = new RegExp(/(%-?[0-9]*l?[dsxXc])/)
+    const elems = fmt.split(re)
+    let pos = 0
+    let result = ''
+    elems.forEach((elem) => {
+        if (elem.length > 0) {
+            if (elem.charAt(0) === '%') {
+                let val: string = argv[pos++]
+                if (val === undefined) {
+                    val = '0'
+                }
+                const rep = new RegExp(/%(-?)(0?)([0-9]*)(l?)([dsxXc])/)
+                const specs = elem.match(rep)
+                // specs[0] = the full pattern
+                // specs[1] = '-' if field is to be left justified
+                // specs[2] = '0' if leading zeros are desired
+                // specs[3] = precision (width of output field)
+                // specs[4] = 'l' if the field is a long (ignored)
+                // specs[5] = format request 'd' 's' 'x' or 'c'
+                switch (specs[5] || '') {
+                    case 'c':
+                        val = val.substring(0, 1)
+                        specs[3] = '' // We ignore the precision for characters
+                        break
+                    case 'x':
+                        val = parseInt(val, 10).toString(16)
+                        break
+                    case 'X':
+                        val = parseInt(val, 10).toString(16).toUpperCase()
+                        break
+                    default:
+                        break
+                }
+                const width = Number(specs[3]) || 0
+                const pad = specs[2] || ' '
+
+                if (specs[1] === '-') {
+                    val = String(val).padEnd(width, pad)
+                } else {
+                    val = String(val).padStart(width, pad)
+                }
+                result += val
+            } else {
+                result += elem
+            }
+        }
+    })
+    return result
+}
