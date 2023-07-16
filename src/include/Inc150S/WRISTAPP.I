@@ -744,6 +744,25 @@ TZ2_NAME        EQU     $be     ; Time zone 2 name (3 TIMEX characters)
 ;               EQU     $c0     ;    "   "  "   "
 TZ2_DOW         EQU     $c1     ; Time zone 2 day of the week (0=Monday..6=Sunday)
 ;-----------------------------------------------------------------------------------------
+; Sound Support Values
+TONE_END        EQU     $00     ; END
+TONE_LOW_C      EQU     $10     ; Low C
+TONE_HI_C       EQU     $20     ; High C
+TONE_MID_C      EQU     $30     ; Middle C
+TONE_VHI_C      EQU     $40     ; Very high C
+TONE_HI_F       EQU     $50     ; High F (little bit lower than F)
+TONE_MID_F      EQU     $60     ; Middle F
+TONE_LO_F       EQU     $70     ; Low F
+TONE_VHI_GSHARP EQU     $80     ; Very High G# (G Sharp)
+TONE_HI_GSHARP  EQU     $90     ; High G#
+TONE_MID_GSHARP EQU     $A0     ; Middle G#
+TONE_LO_GSHARP  EQU     $B0     ; Low G#
+TONE_HI_D       EQU     $C0     ; High D
+TONE_MID_D      EQU     $D0     ; Middle D
+TONE_LO_D       EQU     $E0     ; Low D
+TONE_PAUSE      EQU     $F0     ; Pause
+SND_END         EQU     $80
+;-----------------------------------------------------------------------------------------
 SNDSTART    EQU     $4E39   ; Start playing the current sound in SYSSOUND
 ;--------------------------------------------------------------------------------
 PLAYCONF    EQU     $4E69   ; Play a confirmation sound
@@ -1181,6 +1200,15 @@ WRISTAPP_FLAGS  EQU     $96     ; System Flags
                                 ; Bit7 = Wristapp has been loaded (SET=LOADED)
 NEST_PARM       EQU     $99     ; Holds the parameter passed to the current nested app
 SYSSOUND        EQU     $9B         ; Current sound to be played
+HW_FLAGS        EQU     $9e     ; System Variable
+                                ; Bit0 = Request state for Indiglo light (SET=ON)
+                                ; Bit1 = Indicates the the SYS_07 hardware has been reset
+                                ; Bit2 = <UNUSED>
+                                ; Bit3 = Indicates that we want to load some code from the serial port at reset (SET=ON)
+                                ; Bit4 = Set but never used.  Mimics the state of 0,PORT_C_DATA & 0,PORT_C_DDR
+                                ; Bit5 = Set but never used.  Mimics the state of 1,PORT_C_DATA & 1,PORT_C_DDR
+                                ; Bit6 = Indicates that INST_ADDR is a pointer into the EEPROM (SET=EEPROM Address)
+                                ; Bit7 = Interrupts have been disabled (SET=DISABLED)
 SYSFLAGS        EQU     $9F     ; System flags
                                 ; Bit0 = Indicates the update direction.  (SET=UP)
                                 ; Bit1 = Indicates that the screen needs to be cleared (SET=no need to clear)
@@ -1230,6 +1258,8 @@ WRIST_NEWDATA   EQU     $011c   ; This is the wristapp entry point called when n
 WRIST_GETSTATE  EQU     $011f   ; Entry to get a wristapp state table entry
 WRIST_JMP_STATE0 EQU    $0123   ; Wristapp entry point to call state 0
 
+INST_ADDRHI     EQU     $0437
+INST_ADDRLO     EQU     $0438
 USER04a1        EQU     $04a1
 NESTED_APP      EQU     $04a2   ; Nested application (Only to run an application while a different one is running)
                                 ; This is used to handle alarms and appointments that go off while you are running something else

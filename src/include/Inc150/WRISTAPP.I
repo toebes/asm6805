@@ -527,11 +527,73 @@ ROW_NOTE        EQU     $0E
 ;
 ; Character set
 ;
-C_0         EQU     0
-C_A         EQU     $0A
-C_SPACE     EQU     $24
-C_LEFTARR   EQU     $33     ; Symbol for the previous key
-C_RIGHTARR  EQU     $3D     ; Symbol for the next key
+C_0             EQU     $00
+C_1             EQU     $01
+C_2             EQU     $02
+C_3             EQU     $03
+C_4             EQU     $04
+C_5             EQU     $05
+C_6             EQU     $06
+C_7             EQU     $07
+C_8             EQU     $08
+C_9             EQU     $09
+C_A             EQU     $0A
+C_B             EQU     $0B
+C_C             EQU     $0C
+C_D             EQU     $0D
+C_E             EQU     $0E
+C_F             EQU     $0F
+C_G             EQU     $10
+C_H             EQU     $11
+C_I             EQU     $12
+C_J             EQU     $13
+C_K             EQU     $14
+C_L             EQU     $15
+C_M             EQU     $16
+C_N             EQU     $17
+C_O             EQU     $18
+C_P             EQU     $19
+C_Q             EQU     $1A
+C_R             EQU     $1B
+C_S             EQU     $1C
+C_T             EQU     $1D
+C_U             EQU     $1E
+C_V             EQU     $1F
+C_W             EQU     $20
+C_X             EQU     $21
+C_Y             EQU     $22
+C_Z             EQU     $23
+C_BLANK         EQU     $24
+C_SPACE         EQU     $24
+C_EXCLAIM       EQU     $25
+C_DQUOTE        EQU     $26
+C_POUND         EQU     $27
+C_DOLLAR        EQU     $28
+C_PERCENT       EQU     $29
+C_AMPERSAND     EQU     $2A
+C_QUOTE         EQU     $2B
+C_LPAREN        EQU     $2C
+C_RPAREN        EQU     $2D
+C_TIMES         EQU     $2E
+C_PLUS          EQU     $2F
+C_COMMA         EQU     $30
+C_MINUS         EQU     $31
+C_PERIOD        EQU     $32
+C_SLASH         EQU     $33
+C_COLON         EQU     $34
+C_BACKSLASH     EQU     $35
+C_DIVIDE        EQU     $36
+C_EQUAL         EQU     $37
+C_BELL          EQU     $38
+C_QUESTION      EQU     $39
+C_UNDER         EQU     $3A
+C_CHECK         EQU     $3B
+C_PREV          EQU     $3C
+C_LEFTARR       EQU     $3C     ; Symbol for the previous key
+C_NEXT          EQU     $3D
+C_RIGHTARR      EQU     $3D     ; Symbol for the next key
+C_BLOCK         EQU     $3E
+C_SEP           EQU     $3F
 C6_SPACE        EQU     $1d
 ; The basic timex character set is:
 ; 0 1 2 3 4 5 6 7 8 9 A B C D E F
@@ -582,46 +644,76 @@ EVT_UPGLOW EQU  $A4     ; Indiglo button released
 EVT_UPANY  EQU  $A5     ; Any of the four buttons Released
 EVT_UPANY4 EQU  $A6     ; Any button Released except indiglo
            
+ALARM_STATUS    EQU     $69     ; This is the status flags for the alarms.  The low order bit indicates that it is enabled
+                                ; The next bit seems to indicate that the alarm is temporarily masked or disabled
+                                ; Apparently the next bit can be set, but I haven't seen any use for it.
+;               EQU     $69     ; Alarm 1 Status
+;               EQU     $69     ; Alarm 1 Status
+;               EQU     $6a     ; Alarm 2 Status
+;               EQU     $6b     ; Alarm 3 Status
+;               EQU     $6c     ; Alarm 4 Status
+;               EQU     $6d     ; Alarm 5 Status
+
+SCAN_MONTH      EQU     $7a     ; The current SCAN month
+SCAN_DAY        EQU     $7b     ; The current SCAN day
+SCAN_YEAR       EQU     $7c     ; The current SCAN year
+
+MONTH_JAN       EQU     1
+MONTH_FEB       EQU     2
+MONTH_MAR       EQU     3
+MONTH_APR       EQU     4
+MONTH_MAY       EQU     5
+MONTH_JUN       EQU     6
+MONTH_JUL       EQU     7
+MONTH_AUG       EQU     8
+MONTH_SEP       EQU     9
+MONTH_OCT       EQU     10
+MONTH_NOV       EQU     11
+MONTH_DEC       EQU     12
+
+SYSTEMP0	EQU	$A0
+SYSTEMP1	EQU	$A1
+
 TIM_ONCE   EQU  $ff     ; No time interval.  Operation is executed just once
 
-TIM_1_TIC       EQU     $00
-TIM_1_2TIC      EQU     $01
-TIM_1_3TIC      EQU     $02
-TIM_1_4TIC      EQU     $03
-TIM_1_HALFSEC   EQU     $04
-TIM_1_SECOND    EQU     $05
-TIM_1_SECHALF   EQU     $06
-TIM_1_TWOSEC    EQU     $07
-TIM_1_TWOSEC1   EQU     $08
-TIM_1_12SEC     EQU     $09
-TIM_1_18SEC     EQU     $0a
+TIM1_TIC        EQU     $00
+TIM1_2TIC       EQU     $01
+TIM1_3TIC       EQU     $02
+TIM1_4TIC       EQU     $03
+TIM1_HALFSEC    EQU     $04
+TIM1_SECOND     EQU     $05
+TIM1_SECHALF    EQU     $06
+TIM1_TWOSEC     EQU     $07
+TIM1_TWOSEC1    EQU     $08
+TIM1_12SEC      EQU     $09
+TIM1_18SEC      EQU     $0a
 ;
 ; Note that the second part of this table is happen-stance since it is really a rollover
 ; of the second table on top of the first one. But it might be useful to someone...
 ;
-TIM_1_TICA      EQU     $0b     ; This is the typical scroll interval
-TIM_1_2TICA     EQU     $0c
-TIM_1_4TICA     EQU     $0d
-TIM_1_8TIC      EQU     $0e     ; This is the normal blink interval
-TIM_1_12TIC     EQU     $0f     ; Just over a second
-TIM_1_16TIC     EQU     $10     ; A second and a half
-TIM_1_24TIC     EQU     $11     ; Two and a half seconds
-TIM_1_32TIC     EQU     $12     ; Just over three seconds
-TIM_1_40TIC     EQU     $13     ; Four seconds
-TIM_1_48TIC     EQU     $14     ; Almost five seconds
-TIM_1_96TIC     EQU     $15     ; Almost ten seconds
+TIM1_TICA       EQU     $0b     ; This is the typical scroll interval
+TIM1_2TICA      EQU     $0c
+TIM1_4TICA      EQU     $0d
+TIM1_8TIC       EQU     $0e     ; This is the normal blink interval
+TIM1_12TIC      EQU     $0f     ; Just over a second
+TIM1_16TIC      EQU     $10     ; A second and a half
+TIM1_24TIC      EQU     $11     ; Two and a half seconds
+TIM1_32TIC      EQU     $12     ; Just over three seconds
+TIM1_40TIC      EQU     $13     ; Four seconds
+TIM1_48TIC      EQU     $14     ; Almost five seconds
+TIM1_96TIC      EQU     $15     ; Almost ten seconds
 
-TIM_2_TIC       EQU     $80     ; This is the typical scroll interval
-TIM_2_2TIC      EQU     $81
-TIM_2_4TIC      EQU     $82
-TIM_2_8TIC      EQU     $83     ; This is the normal blink interval
-TIM_2_12TIC     EQU     $84     ; Just over a second
-TIM_2_16TIC     EQU     $85     ; A second and a half
-TIM_2_24TIC     EQU     $86     ; Two and a half seconds
-TIM_2_32TIC     EQU     $87     ; Just over three seconds
-TIM_2_40TIC     EQU     $88     ; Four seconds
-TIM_2_48TIC     EQU     $89     ; Almost five seconds
-TIM_2_96TIC     EQU     $8a     ; Almost ten seconds
+TIM2_TIC        EQU     $80     ; This is the typical scroll interval
+TIM2_2TIC       EQU     $81
+TIM2_4TIC       EQU     $82
+TIM2_8TIC       EQU     $83     ; This is the normal blink interval
+TIM2_12TIC      EQU     $84     ; Just over a second
+TIM2_16TIC      EQU     $85     ; A second and a half
+TIM2_24TIC      EQU     $86     ; Two and a half seconds
+TIM2_32TIC      EQU     $87     ; Just over three seconds
+TIM2_40TIC      EQU     $88     ; Four seconds
+TIM2_48TIC      EQU     $89     ; Almost five seconds
+TIM2_96TIC      EQU     $8a     ; Almost ten seconds
 
 TIM_LONG1  EQU  $01     ; Long shot time interval - Fires a $1F when the the timer expires
 TIM_03     EQU  $03     ; Unknown
@@ -631,6 +723,45 @@ TIM_SHORT  EQU  $82     ; Short timer - Fires a $1F event when the timer expires
 TIM_MED    EQU  $83     ; Medium timer - Fires a $1E event when the timer expires
 TIM_LONG   EQU  $84     ; Long timer - Fires a $1F event when the timer expires
 TIM_86     EQU  $86     ; ?Timer
+;-----------------------------------------------------------------------------------------
+TZ1_HOUR        EQU     $b0     ; Time zone 1 current hour (0-23)
+TZ1_MINUTE      EQU     $b1     ; Time zone 1 current minute (0-59)
+TZ1_MONTH       EQU     $b2     ; Time zone 1 current month of the year (1-12)
+TZ1_DAY         EQU     $b3     ; Time zone 1 current day of the month (1-31)
+TZ1_YEAR        EQU     $b4     ; Time zone 1 current year (mod 1900)
+TZ1_NAME        EQU     $b5     ; Time zone 1 name (3 TIMEX characters)
+;               EQU     $b6     ;    "   "  "   "
+;               EQU     $b7     ;    "   "  "   "
+TZ1_DOW         EQU     $b8     ; Time zone 1 day of week (0=Monday...6=Sunday)
+;-----------------------------------------------------------------------------------------
+TZ2_HOUR        EQU     $b9     ; Time zone 2 current hour (0-23) in Timezone 1
+TZ2_MINUTE      EQU     $ba     ; Time zone 2 current minute (0-59)
+TZ2_MONTH       EQU     $bb     ; Time zone 2 current month of the year (1-12)
+TZ2_DAY         EQU     $bc     ; Time zone 2 current day of the month (1-31)
+TZ2_YEAR        EQU     $bd     ; Time zone 2 current year (mod 1900)
+TZ2_NAME        EQU     $be     ; Time zone 2 name (3 TIMEX characters)
+;               EQU     $bf     ;    "   "  "   "
+;               EQU     $c0     ;    "   "  "   "
+TZ2_DOW         EQU     $c1     ; Time zone 2 day of the week (0=Monday..6=Sunday)
+;-----------------------------------------------------------------------------------------
+; Sound Support Values
+TONE_END        EQU     $00     ; END
+TONE_LOW_C      EQU     $10     ; Low C
+TONE_HI_C       EQU     $20     ; High C
+TONE_MID_C      EQU     $30     ; Middle C
+TONE_VHI_C      EQU     $40     ; Very high C
+TONE_HI_F       EQU     $50     ; High F (little bit lower than F)
+TONE_MID_F      EQU     $60     ; Middle F
+TONE_LO_F       EQU     $70     ; Low F
+TONE_VHI_GSHARP EQU     $80     ; Very High G# (G Sharp)
+TONE_HI_GSHARP  EQU     $90     ; High G#
+TONE_MID_GSHARP EQU     $A0     ; Middle G#
+TONE_LO_GSHARP  EQU     $B0     ; Low G#
+TONE_HI_D       EQU     $C0     ; High D
+TONE_MID_D      EQU     $D0     ; Middle D
+TONE_LO_D       EQU     $E0     ; Low D
+TONE_PAUSE      EQU     $F0     ; Pause
+SND_END         EQU     $80
 ;--------------------------------------------------------------------------------
 SNDSTART    EQU     $4e4a   ; Start playing the current sound in SYSSOUND
 ;--------------------------------------------------------------------------------
@@ -1069,6 +1200,15 @@ WRISTAPP_FLAGS  EQU     $96     ; System Flags
                                 ; Bit7 = Wristapp has been loaded (SET=LOADED)
 NEST_PARM       EQU     $99     ; Holds the parameter passed to the current nested app
 SYSSOUND        EQU     $9B         ; Current sound to be played
+HW_FLAGS        EQU     $9e     ; System Variable
+                                ; Bit0 = Request state for Indiglo light (SET=ON)
+                                ; Bit1 = Indicates the the SYS_07 hardware has been reset
+                                ; Bit2 = <UNUSED>
+                                ; Bit3 = Indicates that we want to load some code from the serial port at reset (SET=ON)
+                                ; Bit4 = Set but never used.  Mimics the state of 0,PORT_C_DATA & 0,PORT_C_DDR
+                                ; Bit5 = Set but never used.  Mimics the state of 1,PORT_C_DATA & 1,PORT_C_DDR
+                                ; Bit6 = Indicates that INST_ADDR is a pointer into the EEPROM (SET=EEPROM Address)
+                                ; Bit7 = Interrupts have been disabled (SET=DISABLED)
 SYSFLAGS        EQU     $9F     ; System flags
                                 ; Bit0 = Indicates the update direction.  (SET=UP)
                                 ; Bit1 = Indicates that the screen needs to be cleared (SET=no need to clear)
@@ -1081,6 +1221,8 @@ SYSFLAGS        EQU     $9F     ; System flags
                                 ; Bit7 = <UNUSED>
 DATDIGIT1       EQU     $A2     ; First digit parameter for PUTMIDnn/PUTTOPnn routines
 DATDIGIT2       EQU     $A3     ; Second digit parameter for PUTMIDnn/PUTTOPnn routines
+UPDATE_VAL      EQU     $a6     ; Temporary value passed to the update/blink routines
+UPDATE_PARM     EQU     $a7     ; Pointer to the data passed to the update/blink routines
 ;
 ; The sound in SYSSOUND can be set to one of the following values:
 ;
@@ -1116,6 +1258,8 @@ WRIST_NEWDATA   EQU     $011c   ; This is the wristapp entry point called when n
 WRIST_GETSTATE  EQU     $011f   ; Entry to get a wristapp state table entry
 WRIST_JMP_STATE0 EQU    $0123   ; Wristapp entry point to call state 0
 
+INST_ADDRHI     EQU     $0437
+INST_ADDRLO     EQU     $0438
 USER04a1        EQU     $04a1
 NESTED_APP      EQU     $04a2   ; Nested application (Only to run an application while a different one is running)
                                 ; This is used to handle alarms and appointments that go off while you are running something else
@@ -1240,7 +1384,7 @@ WRITE_FLAG_BYTE         EQU     $510A
 FILL_EXTRACTBUF         EQU     $513E
 SAVE_EXTRACTBUF         EQU     $515D
 SYSTEM_RESET            EQU     $519B
-SND_OFF                 $5286
+SND_OFF                 EQU     $5286
 DO_SOUND                EQU     $5298
 SET_SYS_0f_4d           EQU     $5203
 SET_SYS_0f_41           EQU     $5208
