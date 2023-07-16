@@ -1,0 +1,6 @@
+// Microsoft Developer Studio generated Help ID include file.
+// Used by Asm6805.rc
+//
+#define HIDC_BROWSE                     0x806603e9
+#define HIDC_BROWSER                    0x806403ea
+#define HIDC_FILENAME                   0x806603e8
