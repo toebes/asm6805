@@ -61,6 +61,8 @@ import {
     CAT_TIMEX6,
     CAT_IMM_DIR_EXT_IX1_IX1_IX,
     aKeyWords,
+    CAT_ORIGIN,
+    CAT_ASCII,
 } from './opcodes'
 
 enum TOKEN {
@@ -777,16 +779,18 @@ class CAsmFile {
                             ) {
                                 nValue -= this.m_lineData[this.m_nCurrentLine].GetOffset() + 2
                                 if (nValue <= 0x7f && nValue >= -0x80) {
-                                    if ((nOpcode & 0xff) == 0xad) {
-                                        this.Emsg(
-                                            'JSR could be replaced with a BSR (distance=%d)',
-                                            nValue
-                                        )
-                                    } else {
-                                        this.Emsg(
-                                            'JMP could be replaced with a BRA (distance=%d)',
-                                            nValue
-                                        )
+                                    if (false) {
+                                        if ((nOpcode & 0xff) == 0xad) {
+                                            this.Emsg(
+                                                'JSR could be replaced with a BSR (distance=%d)',
+                                                nValue
+                                            )
+                                        } else {
+                                            this.Emsg(
+                                                'JMP could be replaced with a BRA (distance=%d)',
+                                                nValue
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -847,6 +851,10 @@ class CAsmFile {
                     break
                 case CAT_DS >> 8:
                     this.Emsg('DS directive not supported')
+                    break
+                case CAT_ORIGIN >> 8:
+                    ;[eToken, nValue] = this.ParseLevel8(eToken)
+                    this.m_lineData[this.m_nCurrentLine].SetOffset(nValue)
                     break
                 case CAT_DW >> 8:
                     for (;;) {
@@ -946,6 +954,14 @@ class CAsmFile {
                                     this.m_strIncludeURI
                                 )
                             }
+                        }
+                        eToken = this.GetToken()
+                    }
+                    break
+                case CAT_ASCII >> 8:
+                    if (eToken == TOKEN.STRING) {
+                        for (let c of this.m_strTokenName) {
+                            nData[nBytes++] = c.charCodeAt(0) & 0x7f
                         }
                         eToken = this.GetToken()
                     }
@@ -1221,9 +1237,14 @@ class CAsmFile {
                     nPos += 3
                     result.push(strLine)
                     if (nBytes == 1) {
-                        strLine = sprintf('    | %04x: %02x       |', nOffset, nData[0])
+                        strLine = sprintf('    | %04x: %02x       |', nOffset, nData[nPos + 0])
                     } else if (nBytes == 2) {
-                        strLine = sprintf('    | %04x: %02x %02x    |', nOffset, nData[0], nData[1])
+                        strLine = sprintf(
+                            '    | %04x: %02x %02x    |',
+                            nOffset,
+                            nData[nPos + 0],
+                            nData[nPos + 1]
+                        )
                     } else {
                         strLine = sprintf(
                             '    | %04x: %02x %02x %02x |',
