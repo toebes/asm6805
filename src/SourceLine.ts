@@ -30,6 +30,7 @@ export class CSourceLine {
     protected m_listSymbols: CSymbol[] = []
     protected m_bIsDirty: boolean
     protected m_nLineOffset: number
+    protected m_bIsOrigin: boolean
     protected m_dataBytes: number[] = []
     protected m_nRelativeOffset: number
     public GetDefinition(): CSymbol | undefined {
@@ -81,8 +82,9 @@ export class CSourceLine {
         return this.m_dataBytes
     }
 
-    public SetOffset(nByteOffset: number): void {
+    public SetOffset(nByteOffset: number, isOrigin = false): void {
         this.m_nLineOffset = nByteOffset
+        this.m_bIsOrigin = isOrigin
         if (this.m_psymbolDefine != null) {
             this.m_psymbolDefine.SetValue(nByteOffset, this)
         }
@@ -100,6 +102,9 @@ export class CSourceLine {
         return this.m_bIsDirty
     }
 
+    public IsOrigin(): boolean {
+        return this.m_bIsOrigin
+    }
     constructor() {
         this.MarkDirty(false)
         this.m_psymbolDefine = undefined

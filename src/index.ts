@@ -28,7 +28,6 @@
 import { Assemble } from './Assemble'
 import { createDocumentElement, htmlToElement } from './common/htmldom'
 import './style.css'
-console.log('Running in index.js')
 
 function getSource(): string[] {
     const codeblock = document.getElementById('code')
@@ -62,34 +61,32 @@ function doCompile(ev: Event) {
     //     showProgress: (str) => void
     // ): Promise<[string[], string, string[]]> {
     const lines = getSource()
-    console.log('Got Source:')
-    console.log(lines)
+    const h3errors = document.getElementById('errors')
+
     Assemble('SourceFile.asm', lines, 'include/Inc150', (status) => {
-        console.log(status)
+        if (h3errors) {
+            setDivContentLines('errors', [status])
+        } else {
+            console.log(status)
+        }
     }).then((res) => {
         let [errors, hex, listing] = res
 
+        if (errors.length === 0) {
+            errors = ['No Errors']
+        }
         setDivContentLines('errors', errors)
         setDivContentLines('listing', listing)
         const hexdiv = document.getElementById('hex')
         if (hexdiv !== undefined && hexdiv !== null) {
             hexdiv.innerHTML = hex
         }
-
-        console.log('Errors:')
-        console.log(errors)
-        console.log('Listing')
-        console.log(listing)
-        console.log(`Hex:${hex}`)
     })
-    console.log('Compile button clicked')
 }
 
 window.addEventListener('load', function () {
-    console.log('finally loaded')
     let content = document.getElementById('content')
     if (content !== undefined && content !== null) {
-        console.log('found Content')
         const button = createDocumentElement('button', {
             id: 'comp2',
             class: 'text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800',
